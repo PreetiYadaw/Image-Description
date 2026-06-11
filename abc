@@ -1,0 +1,26 @@
+import fitz  # PyMuPDF
+
+def render_pages_as_images(pdf_bytes: bytes, dpi: int = 150) -> List[dict]:
+    """
+    Render every PDF page as a PNG image (captures vector graphics, flowcharts, etc.)
+    """
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    pages = []
+
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        # mat controls resolution — 150 DPI is a good balance of quality vs size
+        mat = fitz.Matrix(dpi / 72, dpi / 72)
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        img_bytes = pix.tobytes("png")
+
+        pages.append({
+            "page_number": page_num + 1,
+            "bytes": img_bytes,
+            "width": pix.width,
+            "height": pix.height,
+            "mime": "image/png",
+        })
+
+    doc.close()
+    return pages
